@@ -1,15 +1,8 @@
 # Cryptographic library and app
 
-A comprehensive cryptographic library and command-line application implementing both symmetric and asymmetric encryption algorithms at the 128-bit security level.
+A comprehensive cryptographic library and command-line application implementing asymmetric encryption algorithms at the 128-bit security level.
 
 ## Features
-
-### Symmetric Services
-
-- SHA-3 hash functions (224, 256, 384, 512-bit security levels)
-- SHAKE extendable output functions
-- Message Authentication Code (MAC)
-- Symmetric encryption/decryption
 
 ### Asymmetric Services
 
@@ -20,22 +13,6 @@ A comprehensive cryptographic library and command-line application implementing 
 - Digital signature generation and verification
 
 ## Usage
-
-### Symmetric Operations
-
-```bash
-# Compute hash
-java Main hash <input_file> <output_file> <security_level> [options]
-
-# Compute MAC
-java Main mac <input_file> <output_file> <passphrase> <security_level> <mac_length> [options]
-
-# Encrypt
-java Main encrypt <input_file> <output_file> <passphrase> [options]
-
-# Decrypt
-java Main decrypt <input_file> <output_file> <passphrase> [options]
-```
 
 ### Asymmetric Operations
 
@@ -55,6 +32,32 @@ java Main sign <signature_file> <input_file> <passphrase> [options]
 # Verify signature
 java Main verify <input_file> <signature_file> <public_key_file> [options]
 ```
+
+## Tasks
+
+### Nathan's Tasks
+
+- Edwards:
+  - [ ] Constructor
+  - [ ] gen()
+  - [ ] toString()
+
+- Point:
+  - [ ] equals()
+  - [ ] negate()
+  - [ ] add()
+
+### Trae's Tasks
+
+- Edwards:
+  - [ ] isPoint()
+  - [ ] getPoint()
+
+- Point:
+  - [ ] Constructors
+  - [ ] isZero()
+  - [ ] mul()
+  - [ ] toString()
 
 ## Attribution
 
