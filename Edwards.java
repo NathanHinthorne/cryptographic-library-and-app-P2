@@ -29,7 +29,10 @@ public class Edwards {
      * Create an instance of the default curve NUMS-256.
      */
     public Edwards() {
-        /* ... */ }
+        /* ... */
+        // NATHAN'S JOB
+        // DON'T YOU DARE TOUCH THIS TRAE!!
+    }
 
     /**
      * Determine if a given affine coordinate pair P = (x, y)
@@ -54,7 +57,10 @@ public class Edwards {
      * @return G.
      */
     public Point gen() {
-        /* ... */ }
+        /* ... */
+        // NATHAN'S JOB
+        // DON'T YOU DARE TOUCH THIS TRAE!!
+    }
 
     /**
      * Create a point from its y-coordinate and
@@ -89,7 +95,10 @@ public class Edwards {
      *         and p is the order of the underlying finite field F_p.
      */
     public String toString() {
-        /* ... */ }
+        /* ... */
+        // NATHAN'S JOB
+        // DON'T YOU DARE TOUCH THIS TRAE!!
+    }
 
     /**
      * Compute a square root of v mod p with a specified least-significant bit
@@ -153,7 +162,10 @@ public class Edwards {
          * @return true iff P stands for the same point as this
          */
         public boolean equals(Point P) {
-            /* ... */ }
+            /* ... */
+            // NATHAN'S JOB
+            // DON'T YOU DARE TOUCH THIS TRAE!!
+        }
 
         /**
          * Given a point P = (x, y) on the curve,
@@ -162,7 +174,10 @@ public class Edwards {
          * @return -P
          */
         public Point negate() {
-            /* ... */ }
+            /* ... */
+            // NATHAN'S JOB
+            // DON'T YOU DARE TOUCH THIS TRAE!!
+        }
 
         /**
          * Add two given points on the curve, this and P.
@@ -171,7 +186,10 @@ public class Edwards {
          * @return this + P
          */
         public Point add(Point P) {
-            /* ... */ }
+            /* ... */
+            // NATHAN'S JOB
+            // DON'T YOU DARE TOUCH THIS TRAE!!
+        }
 
         /**
          * Multiply a point P = (x, y) on the curve by a scalar m.
