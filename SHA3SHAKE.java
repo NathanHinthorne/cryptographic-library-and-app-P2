@@ -9,6 +9,9 @@ import java.nio.ByteOrder;
  * Some functionality is inspired by Markku-Juhani Saarinen's C implementation 
  * of SHA-3 and SHAKE, found here: 
  * https://github.com/mjosaarinen/tiny_sha3/blob/master/sha3.c.
+ * 
+ * @author Nathan Hinthorne
+ * @author Trae Claar
  */
 public class SHA3SHAKE {
 
@@ -640,5 +643,4 @@ public class SHA3SHAKE {
 
         return shake.squeeze(out, L);
     }
-
 }
