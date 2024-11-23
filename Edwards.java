@@ -9,6 +9,23 @@ import java.math.BigInteger;
 public class Edwards {
 
     /**
+     * The prime number that defines the finite field of the curve.
+     */
+    private static final BigInteger p = BigInteger.valueOf(2).pow(256)
+        .subtract(new BigInteger("189"));
+
+    /**
+     * The coefficient used in the curve equation.
+     */
+    private static final BigInteger d = BigInteger.valueOf(15343);
+
+    /**
+     * Prime number such that 4 * r is the number of points on the curve.
+     */
+    private static final BigInteger r = BigInteger.valueOf(2).pow(254)
+        .subtract(new BigInteger("87175310462106073678594642380840586067"));
+
+    /**
      * Create an instance of the default curve NUMS-256.
      */
     public Edwards() { /* ... */ }
@@ -21,7 +38,13 @@ public class Edwards {
      * @param y y-coordinate of presumed point on the curve
      * @return whether P is really a point on the curve
      */
-    public boolean isPoint(BigInteger x, BigInteger y) { /* ... */ }
+    public boolean isPoint(BigInteger x, BigInteger y) { 
+        BigInteger x2 = x.multiply(x);
+        BigInteger y2 = y.multiply(y);
+
+        return x2.add(y2).mod(p).equals(BigInteger.ONE.add(d.multiply(x2)
+            .mod(p).multiply(y2).mod(p)).mod(p));
+    }
 
     /**
      * Find a generator G on the curve with the smallest possible
@@ -38,9 +61,22 @@ public class Edwards {
      * @param y the y-coordinate of the desired point
      * @param x_lsb the LSB of its x-coordinate
      * @return point (x, y) if it exists and has order r,
-     * otherwise the neutral element O = (0, 1)
+     *         otherwise the neutral element O = (0, 1)
      */
-    public Point getPoint(BigInteger y, boolean x_lsb) { /* ... */ }
+    public Point getPoint(BigInteger y, boolean x_lsb) { 
+        BigInteger y2 = y.multiply(y);
+        BigInteger num = BigInteger.ONE.subtract(y2).mod(p);
+        BigInteger denom = BigInteger.ONE.subtract(d.multiply(y2).mod(p)).mod(p);
+        BigInteger x = sqrt(num.multiply(denom.modInverse(p)).mod(p), p, x_lsb);
+
+        Point result = new Point(x, y);
+
+        if (!(isPoint(x, y) && result.mul(r).isZero())) {
+            return new Point();
+        }
+
+        return result;
+    }
 
     /**
      * Display a human-readable representation of this curve.
@@ -51,6 +87,30 @@ public class Edwards {
      * and p is the order of the underlying finite field F_p.
      */
     public String toString() { /* ... */ }
+
+    /**
+     * Compute a square root of v mod p with a specified least-significant bit
+     * if such a root exists.
+     * 
+     * Credit: Dr. Paulo Barreto (from the assignment specifications)
+     *
+     * @param v   the radicand.
+     * @param p   the modulus (must satisfy p mod 4 = 3).
+     * @param lsb desired least significant bit (true: 1, false: 0).
+     * @return a square root r of v mod p with r mod 2 = 1 iff lsb = true
+     *         if such a root exists, otherwise null.
+     */
+    private static BigInteger sqrt(BigInteger v, BigInteger p, boolean lsb) {
+        assert (p.testBit(0) && p.testBit(1)); // p = 3 (mod 4)
+        if (v.signum() == 0) {
+            return BigInteger.ZERO;
+        }
+        BigInteger r = v.modPow(p.shiftRight(2).add(BigInteger.ONE), p);
+        if (r.testBit(0) != lsb) {
+            r = p.subtract(r); // correct the lsb
+        }
+        return (r.multiply(r).subtract(v).mod(p).signum() == 0) ? r : null;
+    }
 
     /**
      * Edwards curve point in affine coordinates.
