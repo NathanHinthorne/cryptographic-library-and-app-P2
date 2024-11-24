@@ -12,20 +12,19 @@ public class Edwards {
     /**
      * The prime number that defines the finite field of the curve.
      */
-    private static final BigInteger p = BigInteger.valueOf(2).pow(256)
+    private static final BigInteger p = BigInteger.TWO.pow(256)
             .subtract(new BigInteger("189"));
     // 🌮 💧
 
     /**
      * The coefficient used in the curve equation.
      */
-    // 🌮 💧
-    private static final BigInteger d = BigInteger.valueOf(15343);
+    private static final BigInteger d = new BigInteger("15343");
 
     /**
      * Prime number such that 4 * r is the number of points on the curve.
      */
-    private static final BigInteger r = BigInteger.valueOf(2).pow(254)
+    private static final BigInteger r = BigInteger.TWO.pow(254)
             .subtract(new BigInteger("87175310462106073678594642380840586067"));
 
     /**
