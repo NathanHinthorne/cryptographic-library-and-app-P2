@@ -54,10 +54,10 @@ java Main verify <input_file> <signature_file> <public_key_file> [options]
   - [x] getPoint()
 
 - Point:
-  - [ ] Constructors
-  - [ ] isZero()
-  - [ ] mul()
-  - [ ] toString()
+  - [x] Constructors
+  - [x] isZero()
+  - [x] mul()
+  - [x] toString()
 
 ## Attribution
 
