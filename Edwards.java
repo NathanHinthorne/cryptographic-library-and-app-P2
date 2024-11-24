@@ -230,7 +230,7 @@ public class Edwards {
             BigInteger numeratorY = this.y.multiply(P.y).subtract(this.x.multiply(P.x));
             BigInteger denominatorY = BigInteger.valueOf(1)
                     .subtract(d.multiply(this.x).multiply(P.x).multiply(this.y).multiply(P.y));
-            BigInteger newY = numeratorX.multiply(denominatorX.modInverse(p)).mod(p);
+            BigInteger newY = numeratorY.multiply(denominatorY.modInverse(p)).mod(p);
 
             /*
              * NOTE: For two numbers a and n, the modular multiplicative inverse is a number
