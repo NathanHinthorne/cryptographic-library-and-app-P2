@@ -3,7 +3,7 @@ import java.math.BigInteger;
 /**
  * Arithmetic on Edwards elliptic curves.
  * 
- * @author Nathan Hinthorne
+ * @author 🕺 Nathan Hinthorne 🕺
  * @author Trae Claar
  */
 public class Edwards {
@@ -34,7 +34,7 @@ public class Edwards {
         /* ... */
         // 🌮 💧
 
-        // NATHAN'S JOB
+        // 🕺 NATHAN'S JOB 🕺
         // DON'T YOU DARE TOUCH THIS TRAE!!
     }
 
@@ -63,7 +63,7 @@ public class Edwards {
      */
     public Point gen() {
         /* ... */
-        // NATHAN'S JOB
+        // 🕺 NATHAN'S JOB 🕺
         // DON'T YOU DARE TOUCH THIS TRAE!!
 
         // 🌮 💧
@@ -106,7 +106,7 @@ public class Edwards {
      */
     public String toString() {
         /* ... */
-        // NATHAN'S JOB
+        // 🕺 NATHAN'S JOB 🕺
         // DON'T YOU DARE TOUCH THIS TRAE!!
     }
 
@@ -144,10 +144,20 @@ public class Edwards {
     public class Point {
 
         /**
+         * The x-coordinate of the point.
+         */
+        private final BigInteger x;
+
+        /**
+         * The y-coordinate of the point.
+         */
+        private final BigInteger y;
+
+        /**
          * Create a copy of the neutral element on this curve.
          */
         public Point() {
-            /* ... */
+            this(BigInteger.ZERO, BigInteger.ONE);
         }
 
         /**
@@ -158,7 +168,13 @@ public class Edwards {
          * @param y the y-coordinate of the desired point
          */
         private Point(BigInteger x, BigInteger y) {
-            /* ... */
+            if (!isPoint(x, y)) {
+                throw new IllegalArgumentException("Point (" + x + ", " + y + ")"
+                    + " is not on the curve " + Edwards.this.toString());
+            }
+
+            this.x = x;
+            this.y = y;
         }
 
         /**
@@ -167,10 +183,7 @@ public class Edwards {
          * @return true iff this point is O
          */
         public boolean isZero() {
-            /* ... */
-            // the neutral element of addition is the point O ∶= (0,1).
-            // 🌮 💧
-
+            return this.x.intValue() == 0 && this.y.intValue() == 1;
         }
 
         /**
@@ -182,7 +195,7 @@ public class Edwards {
          */
         public boolean equals(Point P) {
             /* ... */
-            // NATHAN'S JOB
+            // 🕺 NATHAN'S JOB 🕺
             // DON'T YOU DARE TOUCH THIS TRAE!!
         }
 
@@ -194,7 +207,7 @@ public class Edwards {
          */
         public Point negate() {
             /* ... */
-            // NATHAN'S JOB
+            // 🕺 NATHAN'S JOB 🕺
             // DON'T YOU DARE TOUCH THIS TRAE!!
 
             // The opposite of a point (𝑥, 𝑦) is the point (−𝑥,𝑦)
@@ -208,7 +221,7 @@ public class Edwards {
          * @return this + P
          */
         public Point add(Point P) {
-            // NATHAN'S JOB
+            // 🕺 NATHAN'S JOB 🕺
             // DON'T YOU DARE TOUCH THIS TRAE!!
 
             // 🌮 💧
@@ -251,7 +264,15 @@ public class Edwards {
          * @return m*P
          */
         public Point mul(BigInteger m) {
-            /* ... */ }
+            Point v = new Point();
+            for (int i = m.bitLength() - 1; i >= 0; i--) {
+                v = v.add(v);
+                if (m.testBit(i)) {
+                    v = v.add(this);
+                }
+            }
+            return v;
+        }
 
         /**
          * Display a human-readable representation of this point.
@@ -260,7 +281,8 @@ public class Edwards {
          *         the coordinates of this point
          */
         public String toString() {
-            /* ... */ }
+            return "(" + x + ", " + y + ")";
+        }
 
     }
 
