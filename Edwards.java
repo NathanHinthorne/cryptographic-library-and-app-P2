@@ -7,16 +7,19 @@ import java.math.BigInteger;
  * @author Trae Claar
  */
 public class Edwards {
+    // 🌮 💧
 
     /**
      * The prime number that defines the finite field of the curve.
      */
     private static final BigInteger p = BigInteger.valueOf(2).pow(256)
             .subtract(new BigInteger("189"));
+    // 🌮 💧
 
     /**
      * The coefficient used in the curve equation.
      */
+    // 🌮 💧
     private static final BigInteger d = BigInteger.valueOf(15343);
 
     /**
@@ -30,6 +33,8 @@ public class Edwards {
      */
     public Edwards() {
         /* ... */
+        // 🌮 💧
+
         // NATHAN'S JOB
         // DON'T YOU DARE TOUCH THIS TRAE!!
     }
@@ -45,6 +50,7 @@ public class Edwards {
     public boolean isPoint(BigInteger x, BigInteger y) {
         BigInteger x2 = x.multiply(x);
         BigInteger y2 = y.multiply(y);
+        // 🌮 💧
 
         return x2.add(y2).mod(p).equals(BigInteger.ONE.add(d.multiply(x2)
                 .mod(p).multiply(y2).mod(p)).mod(p));
@@ -60,6 +66,9 @@ public class Edwards {
         /* ... */
         // NATHAN'S JOB
         // DON'T YOU DARE TOUCH THIS TRAE!!
+
+        // 🌮 💧
+
     }
 
     /**
@@ -83,6 +92,8 @@ public class Edwards {
             return new Point();
         }
 
+        // 🌮 💧
+
         return result;
     }
 
@@ -99,6 +110,8 @@ public class Edwards {
         // NATHAN'S JOB
         // DON'T YOU DARE TOUCH THIS TRAE!!
     }
+
+    // 🌮 💧
 
     /**
      * Compute a square root of v mod p with a specified least-significant bit
@@ -123,6 +136,7 @@ public class Edwards {
         }
         return (r.multiply(r).subtract(v).mod(p).signum() == 0) ? r : null;
     }
+    // 🌮 💧
 
     /**
      * Edwards curve point in affine coordinates.
@@ -134,7 +148,8 @@ public class Edwards {
          * Create a copy of the neutral element on this curve.
          */
         public Point() {
-            /* ... */ }
+            /* ... */
+        }
 
         /**
          * Create a point from its coordinates (assuming
@@ -144,7 +159,8 @@ public class Edwards {
          * @param y the y-coordinate of the desired point
          */
         private Point(BigInteger x, BigInteger y) {
-            /* ... */ }
+            /* ... */
+        }
 
         /**
          * Determine if this point is the neutral element O on the curve.
@@ -152,7 +168,11 @@ public class Edwards {
          * @return true iff this point is O
          */
         public boolean isZero() {
-            /* ... */ }
+            /* ... */
+            // the neutral element of addition is the point O ∶= (0,1).
+            // 🌮 💧
+
+        }
 
         /**
          * Determine if a given point P stands for
@@ -177,7 +197,10 @@ public class Edwards {
             /* ... */
             // NATHAN'S JOB
             // DON'T YOU DARE TOUCH THIS TRAE!!
+
+            // The opposite of a point (𝑥, 𝑦) is the point (−𝑥,𝑦)
         }
+        // 🌮 💧
 
         /**
          * Add two given points on the curve, this and P.
@@ -186,10 +209,41 @@ public class Edwards {
          * @return this + P
          */
         public Point add(Point P) {
-            /* ... */
             // NATHAN'S JOB
             // DON'T YOU DARE TOUCH THIS TRAE!!
+
+            // 🌮 💧
+
+            /*
+             * Given any two points (𝑥1,𝑦1) and (𝑥2,𝑦2) on the curve, their sum is the
+             * point:
+             * 
+             * x₃ ≡ (x₁y₂ + y₁x₂) * (1 + dx₁x₂y₁y₂)⁻¹ mod p
+             * y₃ ≡ (y₁y₂ - x₁x₂) * (1 - dx₁x₂y₁y₂)⁻¹ mod p
+             */
+
+            BigInteger numeratorX = this.x.multiply(P.y).add(this.y.multiply(P.x));
+            BigInteger denominatorX = BigInteger.valueOf(1)
+                    .add(d.multiply(this.x).multiply(P.x).multiply(this.y).multiply(P.y));
+            BigInteger newX = numeratorX.multiply(denominatorX.modInverse(p)).mod(p);
+
+            BigInteger numeratorY = this.y.multiply(P.y).subtract(this.x.multiply(P.x));
+            BigInteger denominatorY = BigInteger.valueOf(1)
+                    .subtract(d.multiply(this.x).multiply(P.x).multiply(this.y).multiply(P.y));
+            BigInteger newY = numeratorX.multiply(denominatorX.modInverse(p)).mod(p);
+
+            /*
+             * NOTE: For two numbers a and n, the modular multiplicative inverse is a number
+             * b such that:
+             * (a * b) mod n = 1
+             * 
+             * If a = 3 and n = 7, the modular inverse of 3 (mod 7) is 5
+             * Because: (3 * 5) mod 7 = 15 mod 7 = 1
+             */
+
+            return new Point(newX, newY);
         }
+        // 🌮 💧
 
         /**
          * Multiply a point P = (x, y) on the curve by a scalar m.
@@ -210,4 +264,7 @@ public class Edwards {
             /* ... */ }
 
     }
+
+    // 🌮 💧
+
 }
