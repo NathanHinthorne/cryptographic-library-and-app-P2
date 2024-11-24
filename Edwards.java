@@ -194,9 +194,7 @@ public class Edwards {
          * @return true iff P stands for the same point as this
          */
         public boolean equals(Point P) {
-            /* ... */
-            // 🕺 NATHAN'S JOB 🕺
-            // DON'T YOU DARE TOUCH THIS TRAE!!
+            return this.x.equals(P.x) && this.y.equals(P.y);
         }
 
         /**
@@ -206,11 +204,8 @@ public class Edwards {
          * @return -P
          */
         public Point negate() {
-            /* ... */
-            // 🕺 NATHAN'S JOB 🕺
-            // DON'T YOU DARE TOUCH THIS TRAE!!
-
             // The opposite of a point (𝑥, 𝑦) is the point (−𝑥,𝑦)
+            return new Point(this.x.negate().mod(p), this.y);
         }
         // 🌮 💧
 
@@ -221,10 +216,6 @@ public class Edwards {
          * @return this + P
          */
         public Point add(Point P) {
-            // 🕺 NATHAN'S JOB 🕺
-            // DON'T YOU DARE TOUCH THIS TRAE!!
-
-            // 🌮 💧
 
             /*
              * Given any two points (𝑥1,𝑦1) and (𝑥2,𝑦2) on the curve, their sum is the
@@ -234,14 +225,22 @@ public class Edwards {
              * y₃ ≡ (y₁y₂ - x₁x₂) * (1 - dx₁x₂y₁y₂)⁻¹ mod p
              */
 
-            BigInteger numeratorX = this.x.multiply(P.y).add(this.y.multiply(P.x));
-            BigInteger denominatorX = BigInteger.valueOf(1)
-                    .add(d.multiply(this.x).multiply(P.x).multiply(this.y).multiply(P.y));
+            // x₃ calculation
+            BigInteger x1y2 = this.x.multiply(P.y).mod(p);
+            BigInteger y1x2 = this.y.multiply(P.x).mod(p);
+            BigInteger numeratorX = x1y2.add(y1x2).mod(p);
+
+            BigInteger dx1x2 = d.multiply(this.x).multiply(P.x).mod(p);
+            BigInteger dx1x2y1y2 = dx1x2.multiply(this.y).multiply(P.y).mod(p);
+            BigInteger denominatorX = BigInteger.ONE.add(dx1x2y1y2).mod(p);
             BigInteger newX = numeratorX.multiply(denominatorX.modInverse(p)).mod(p);
 
-            BigInteger numeratorY = this.y.multiply(P.y).subtract(this.x.multiply(P.x));
-            BigInteger denominatorY = BigInteger.valueOf(1)
-                    .subtract(d.multiply(this.x).multiply(P.x).multiply(this.y).multiply(P.y));
+            // y₃ calculation
+            BigInteger y1y2 = this.y.multiply(P.y).mod(p);
+            BigInteger x1x2 = this.x.multiply(P.x).mod(p);
+            BigInteger numeratorY = y1y2.subtract(x1x2).mod(p);
+
+            BigInteger denominatorY = BigInteger.ONE.subtract(dx1x2y1y2).mod(p);
             BigInteger newY = numeratorY.multiply(denominatorY.modInverse(p)).mod(p);
 
             /*
