@@ -38,9 +38,9 @@ java Main verify <input_file> <signature_file> <public_key_file> [options]
 ### Nathan's Tasks
 
 - Edwards:
-  - [ ] Constructor
-  - [ ] gen()
-  - [ ] toString()
+  - [x] Constructor
+  - [x] gen()
+  - [x] toString()
 
 - Point:
   - [x] equals()

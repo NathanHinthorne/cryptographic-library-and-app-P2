@@ -32,11 +32,7 @@ public class Edwards {
      * Create an instance of the default curve NUMS-256.
      */
     public Edwards() {
-        /* ... */
-        // 🌮 💧
-
-        // NATHAN'S JOB
-        // DON'T YOU DARE TOUCH THIS TRAE!!
+        // Nothing to initialize
     }
 
     /**
@@ -63,12 +59,33 @@ public class Edwards {
      * @return G.
      */
     public Point gen() {
-        /* ... */
-        // NATHAN'S JOB
-        // DON'T YOU DARE TOUCH THIS TRAE!!
-
         // 🌮 💧
 
+        /*
+         * Need to solve for x in curve equation:
+         * x² + y² = 1 + dx²y²
+         * x² - dy²y² + y² = 1
+         * x²(1 - dy²) = 1 - y²
+         * x² = (1 - y²)/(1 - dy²)
+         * x = sqrt((1 - y²)/(1 - dy²))
+         * 
+         * A point on NUMS-256 is represented by a pair (𝑥,𝑦) of integers satisfying
+         * the curve equation above.
+         * The curve has a special point 𝐺 ≔ (𝑥0,𝑦0) called its public generator,
+         * with 𝑦0 = −4 (mod 𝑝) and x0 a certain unique even number.
+         */
+
+        BigInteger y = BigInteger.valueOf(-4).mod(p);
+
+        BigInteger ySquared = y.multiply(y).mod(p);
+        BigInteger numerator = BigInteger.ONE.subtract(ySquared).mod(p);
+        BigInteger denominator = BigInteger.ONE.subtract(d.multiply(ySquared)).mod(p);
+        BigInteger v = numerator.multiply(denominator.modInverse(p)).mod(p);
+
+        // Get square root that's guaranteed to be even (LSB = 0)
+        BigInteger x = sqrt(v, p, false);
+
+        return new Point(x, y);
     }
 
     /**
@@ -109,6 +126,7 @@ public class Edwards {
         /* ... */
         // NATHAN'S JOB
         // DON'T YOU DARE TOUCH THIS TRAE!!
+        return "Edwards: x^2 + y^2 = 1 + " + d + "*x^2*y^2 mod " + p;
     }
 
     // 🌮 💧
