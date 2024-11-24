@@ -222,14 +222,22 @@ public class Edwards {
              * y₃ ≡ (y₁y₂ - x₁x₂) * (1 - dx₁x₂y₁y₂)⁻¹ mod p
              */
 
-            BigInteger numeratorX = this.x.multiply(P.y).add(this.y.multiply(P.x));
-            BigInteger denominatorX = BigInteger.valueOf(1)
-                    .add(d.multiply(this.x).multiply(P.x).multiply(this.y).multiply(P.y));
+            // x₃ calculation
+            BigInteger x1y2 = this.x.multiply(P.y).mod(p);
+            BigInteger y1x2 = this.y.multiply(P.x).mod(p);
+            BigInteger numeratorX = x1y2.add(y1x2).mod(p);
+
+            BigInteger dx1x2 = d.multiply(this.x).multiply(P.x).mod(p);
+            BigInteger dx1x2y1y2 = dx1x2.multiply(this.y).multiply(P.y).mod(p);
+            BigInteger denominatorX = BigInteger.ONE.add(dx1x2y1y2).mod(p);
             BigInteger newX = numeratorX.multiply(denominatorX.modInverse(p)).mod(p);
 
-            BigInteger numeratorY = this.y.multiply(P.y).subtract(this.x.multiply(P.x));
-            BigInteger denominatorY = BigInteger.valueOf(1)
-                    .subtract(d.multiply(this.x).multiply(P.x).multiply(this.y).multiply(P.y));
+            // y₃ calculation
+            BigInteger y1y2 = this.y.multiply(P.y).mod(p);
+            BigInteger x1x2 = this.x.multiply(P.x).mod(p);
+            BigInteger numeratorY = y1y2.subtract(x1x2).mod(p);
+
+            BigInteger denominatorY = BigInteger.ONE.subtract(dx1x2y1y2).mod(p);
             BigInteger newY = numeratorY.multiply(denominatorY.modInverse(p)).mod(p);
 
             /*
