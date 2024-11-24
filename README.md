@@ -43,15 +43,15 @@ java Main verify <input_file> <signature_file> <public_key_file> [options]
   - [ ] toString()
 
 - Point:
-  - [ ] equals()
-  - [ ] negate()
-  - [ ] add()
+  - [x] equals()
+  - [x] negate()
+  - [x] add()
 
 ### Trae's Tasks
 
 - Edwards:
-  - [ ] isPoint()
-  - [ ] getPoint()
+  - [x] isPoint()
+  - [x] getPoint()
 
 - Point:
   - [ ] Constructors

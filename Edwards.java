@@ -182,9 +182,7 @@ public class Edwards {
          * @return true iff P stands for the same point as this
          */
         public boolean equals(Point P) {
-            /* ... */
-            // NATHAN'S JOB
-            // DON'T YOU DARE TOUCH THIS TRAE!!
+            return this.x.equals(P.x) && this.y.equals(P.y);
         }
 
         /**
@@ -194,11 +192,8 @@ public class Edwards {
          * @return -P
          */
         public Point negate() {
-            /* ... */
-            // NATHAN'S JOB
-            // DON'T YOU DARE TOUCH THIS TRAE!!
-
             // The opposite of a point (𝑥, 𝑦) is the point (−𝑥,𝑦)
+            return new Point(this.x.negate().mod(p), this.y);
         }
         // 🌮 💧
 
@@ -209,11 +204,6 @@ public class Edwards {
          * @return this + P
          */
         public Point add(Point P) {
-            // NATHAN'S JOB
-            // DON'T YOU DARE TOUCH THIS TRAE!!
-
-            // 🌮 💧
-
             /*
              * Given any two points (𝑥1,𝑦1) and (𝑥2,𝑦2) on the curve, their sum is the
              * point:
