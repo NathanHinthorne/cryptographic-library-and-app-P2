@@ -61,63 +61,48 @@ public class Main {
 
         if (!isValidService(service)) {
             System.out.println("Invalid service: \"" + service +
-                    "\". Must be one of hash, mac, encrypt, or decrypt.");
+                    "\". Must be one of \"genkey\", \"ecencrypt\", \"ecdecrypt\", \"sign\", or \"verify\".");
             return;
         }
-
-        if (args.length < 3) {
-            System.out.println("Insufficient arguments provided.");
-            return;
-        }
-
-        String inPath = args[1];
-        String outPath = args[2];
 
         try {
             if (service.equals("genkey")) {
-                if (args.length != 4) {
-                    System.out.println("Usage: java Main.java hash <input_file> <output_file> <security_level>");
+                if (args.length != 2) {
+                    System.out.println("Usage: java Main genkey <public_key_file> <passphrase> [options]");
                     return;
                 }
-                int securityLevel = Integer.parseInt(args[3]);
-                if (!isValidSecurityLevel(securityLevel)) {
-                    System.out.println("Invalid security level: \"" + securityLevel
-                            + "\". Must be one of one of 224, 256, 384, or 512.");
-                    return;
-                }
-                computeHash(inPath, outPath, securityLevel);
+
+                // genkey();
             } else if (service.equals("ecencrypt")) {
-                if (args.length != 6) {
+                if (args.length != 3) {
                     System.out.println(
-                            "Usage: java Main.java mac <input_file> <output_file> <passphrase> <security_level> <mac_length> <mac_length>");
-                    return;
-                }
-                int securityLevel = Integer.parseInt(args[4]);
-                if (!isValidSecurityLevel(securityLevel)) {
-                    System.out.println("Invalid security level: \"" + securityLevel
-                            + "\". Must be one of one of 224, 256, 384, or 512.");
+                            "Usage: java Main ecencrypt <input_file> <output_file> <public_key_file> [options]");
                     return;
                 }
 
-                int macLength = Integer.parseInt(args[5]);
-                if (macLength <= 0) {
-                    System.out.println("MAC length must be greater than zero.");
+                // ecencrypt();
+            } else if (service.equals("ecdecrypt")) {
+                if (args.length != 3) {
+                    System.out.println("Usage: java Main ecdecrypt <input_file> <output_file> <passphrase> [options]");
                     return;
                 }
 
-                computeMAC(inPath, outPath, securityLevel, args[3], macLength);
-            } else if (service.equals("ecdecrypt")) {
-                if (args.length != 4) {
-                    System.out.println("Usage: java Main.java encrypt <input_file> <output_file> <passphrase>");
+                // ecdecrypt();
+            } else if (service.equals("sign")) {
+                if (args.length != 3) {
+                    System.out.println("Usage: java Main sign <signature_file> <input_file> <passphrase> [options]");
                     return;
                 }
-                ecencrypt(inPath, outPath, args[3]);
-            } else if (service.equals("ecdecrypt")) {
-                if (args.length != 4) {
-                    System.out.println("Usage: java Main.java decrypt <input_file> <output_file> <passphrase>");
+
+                // sign();
+            } else if (service.equals("verify")) {
+                if (args.length != 3) {
+                    System.out.println(
+                            "Usage: java Main verify <input_file> <signature_file> <public_key_file> [options]");
                     return;
                 }
-                ecdecrypt(inPath, outPath, args[3]);
+
+                // verify();
             }
         } catch (NumberFormatException e) {
             System.out.println("Invalid number format: " + e.getMessage());
@@ -125,12 +110,8 @@ public class Main {
     }
 
     private static boolean isValidService(String service) {
-        return (service.equals("hash") || service.equals("mac") ||
-                service.equals("encrypt") || service.equals("decrypt"));
-    }
-
-    private static boolean isValidSecurityLevel(int securityLevel) {
-        return (securityLevel == 224) || (securityLevel == 256) ||
-                (securityLevel == 384) || (securityLevel == 512);
+        return (service.equals("genkey") || service.equals("ecencrypt") ||
+                service.equals("ecdecrypt") || service.equals("sign") ||
+                service.equals("verify"));
     }
 }
