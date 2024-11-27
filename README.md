@@ -14,8 +14,6 @@ A comprehensive cryptographic library and command-line application implementing 
 
 ## Usage
 
-### Asymmetric Operations
-
 ```bash
 # Generate key pair
 java Main genkey <public_key_file> <passphrase> [options]
@@ -33,37 +31,9 @@ java Main sign <signature_file> <input_file> <passphrase> [options]
 java Main verify <input_file> <signature_file> <public_key_file> [options]
 ```
 
-## Tasks
-
-### Nathan's Tasks
-
-- Edwards:
-  - [x] Constructor
-  - [x] gen()
-  - [x] toString()
-
-- Point:
-  - [x] equals()
-  - [x] negate()
-  - [x] add()
-
-### Trae's Tasks
-
-- Edwards:
-  - [x] isPoint()
-  - [x] getPoint()
-
-- Point:
-  - [x] Constructors
-  - [x] isZero()
-  - [x] mul()
-  - [x] toString()
-
 ## Attribution
 
 Uses specifications found in https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf for the SHA-3/SHAKE implementation.
-
-Uses specifications found in 
 
 ## Contributing
 
