@@ -10,10 +10,39 @@ public class Main {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     /**
+     * Generates a private/public key pair based on a provided passphrase, returns
+     * the private key, and optionally writes the public key (which is a point on 
+     * an elliptic curve) to a file.
      * 
+     * @param publicKeyPath file path to write the public key to, or null if the 
+     * public key should not be written to a file
+     * @param passphrase the passphrase from which to generate the key pair
+     * @return the private key
      */
-    private static void genkey(String publicKeyPath, String passphrase) {
+    private static BigInteger genkey(String publicKeyPath, String passphrase) {
+        SHA3SHAKE sponge = new SHA3SHAKE();
+        sponge.init(128);
+        sponge.absorb(passphrase.getBytes());
+        BigInteger s = new BigInteger(sponge.squeeze(256)).mod(Edwards.r);
+        
+        Edwards curve = new Edwards();
+        Edwards.Point v = curve.gen().mul(s);
 
+        if (v.x.testBit(0)) {
+            s = Edwards.r.subtract(s);
+            v = v.negate();
+        }
+
+        if (publicKeyPath != null) {
+            try (FileOutputStream fileOutput = new FileOutputStream(publicKeyPath)) {
+                fileOutput.write(v.x.toByteArray());
+                fileOutput.write(v.y.toByteArray());
+            } catch (IOException e) {
+                System.out.println("Failed to write public key to requested file: " + e);
+            }
+        }
+
+        return s;
     }
 
     /**
