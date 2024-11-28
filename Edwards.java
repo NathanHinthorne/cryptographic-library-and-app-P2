@@ -24,7 +24,7 @@ public class Edwards {
     /**
      * Prime number such that 4 * r is the number of points on the curve.
      */
-    private static final BigInteger r = BigInteger.TWO.pow(254)
+    public static final BigInteger r = BigInteger.TWO.pow(254)
             .subtract(new BigInteger("87175310462106073678594642380840586067"));
 
     /**
@@ -164,12 +164,12 @@ public class Edwards {
         /**
          * The x-coordinate of the point.
          */
-        private final BigInteger x;
+        public final BigInteger x;
 
         /**
          * The y-coordinate of the point.
          */
-        private final BigInteger y;
+        public final BigInteger y;
 
         /**
          * Create a copy of the neutral element on this curve.
