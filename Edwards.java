@@ -116,9 +116,6 @@ public class Edwards {
      *         and p is the order of the underlying finite field F_p.
      */
     public String toString() {
-        /* ... */
-        // 🕺 NATHAN'S JOB 🕺
-        // DON'T YOU DARE TOUCH THIS TRAE!!
         return "Edwards: x^2 + y^2 = 1 + " + d + "*x^2*y^2 mod " + p;
     }
 

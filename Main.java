@@ -4,6 +4,12 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
+/**
+ * 
+ * 
+ * @author 🕺 Nathan Hinthorne 🕺
+ * @author 🌮 Trae Claar 💧
+ */
 public class Main {
     /**
      * A cryptographically secure random number generator.
@@ -47,17 +53,77 @@ public class Main {
     }
 
     /**
+     * Encrypts a message using the provided public key and passphrase.
+     * 
+     * @param publicKeyPath file path to the public key to use for encryption
+     * @param messagePath   file path to the message to encrypt
+     * @param outputPath    file path to write the encrypted message to
+     * 
+     * @throws IOException
      */
-    private static void ecencrypt(String inputPath, String outputPath,
-            String publicKeyPath) {
+    private static void ecencrypt(String publicKeyPath, String messagePath, String outputPath) {
 
         // reads the raw bytes directly, preserving the exact data without any text
         // interpretation.
-        try (FileInputStream fileInput = new FileInputStream(inputPath);
+        try (FileInputStream messageFile = new FileInputStream(messagePath);
+                FileInputStream publicKeyFile = new FileInputStream(publicKeyPath);
                 FileOutputStream fileOutput = new FileOutputStream(outputPath)) {
 
+            // 0. Reconstruct the public key from the file
+            Edwards curve = new Edwards();
+
+            // find public key (first 33 bytes is x coordinate)
+            byte[] xBytes = publicKeyFile.readNBytes(33);
+            byte[] yBytes = publicKeyFile.readNBytes(33);
+            BigInteger yBigInt = new BigInteger(yBytes);
+
+            boolean lsbIsZero = (xBytes[32] & 1) == 0;
+            Edwards.Point V = curve.getPoint(yBigInt, lsbIsZero);
+
+            // 1. Generate random nonce k
+            BigInteger k = genNonce();
+
+            // 2. Compute key exchange points (W <- k*V, Z <- k*G)
+            Edwards.Point W = V.mul(k); // W = k*V
+            Edwards.Point Z = curve.gen().mul(k); // Z = k*G
+
+            // 3. Key derivation
+            SHA3SHAKE sponge = new SHA3SHAKE();
+            sponge.init(256);
+            sponge.absorb(W.y.toByteArray());
+
+            byte[] ka = sponge.squeeze(32); // 256 bits
+            byte[] ke = sponge.squeeze(32); // 256 bits
+
+            // 4. Symmetric encryption
+            sponge.init(128);
+            sponge.absorb(ke);
+
+            // squeeze as many bytes as the message length
+            byte[] message = messageFile.readAllBytes();
+            byte[] oneTimePad = sponge.squeeze(message.length);
+
+            // XOR with message
+            byte[] c = new byte[message.length]; // ciphertext
+            for (int i = 0; i < message.length; i++) {
+                c[i] = (byte) (message[i] ^ oneTimePad[i]);
+            }
+
+            // 5. Authentication tag generation
+            sponge.init(256);
+            sponge.absorb(ka);
+            sponge.absorb(c);
+            byte[] t = sponge.digest();
+
+            // 6. Write full cryptogram to output
+            // Cryptogram is (Z, ciphertext, tag)
+            fileOutput.write(Z.x.toByteArray());
+            fileOutput.write(Z.y.toByteArray());
+            fileOutput.write(c);
+            fileOutput.write(t);
+
         } catch (IOException e) {
-            System.out.println("Encryption failed: " + e);
+            System.out.println("Failed to write cryptogram to requested file: " + e);
         }
     }
 
@@ -67,11 +133,63 @@ public class Main {
      * 
      * @throws IOException
      */
-    private static void ecdecrypt(String inputPath, String outputPath,
-            String passphrase) {
+    private static void ecdecrypt(String passphrase, String inputPath, String outputPath) {
 
         try (FileInputStream fileInput = new FileInputStream(inputPath);
                 FileOutputStream fileOutput = new FileOutputStream(outputPath)) {
+
+            // 1. Reconstruct the point Z from the input file
+            Edwards curve = new Edwards();
+            byte[] xBytes = fileInput.readNBytes(33);
+            byte[] yBytes = fileInput.readNBytes(33);
+
+            BigInteger yBigInt = new BigInteger(yBytes);
+            boolean lsbIsZero = (xBytes[32] & 1) == 0;
+            Edwards.Point Z = curve.getPoint(yBigInt, lsbIsZero);
+
+            // 2. Read the ciphertext and tag
+            byte[] c = fileInput.readNBytes(fileInput.available() - 32); // remaining bytes minus tag
+            byte[] t = fileInput.readNBytes(32); // last 32 bytes are the tag
+
+            // 3. Recompute private key from passphrase
+            SHA3SHAKE sponge = new SHA3SHAKE();
+            sponge.init(128);
+            sponge.absorb(passphrase.getBytes());
+            BigInteger s = new BigInteger(sponge.squeeze(256)).mod(Edwards.r);
+
+            // 4. Compute W = s*Z
+            Edwards.Point W = Z.mul(s);
+
+            // 5. Derive keys ka and ke
+            sponge.init(256);
+            sponge.absorb(W.y.toByteArray());
+            byte[] ka = sponge.squeeze(32);
+            byte[] ke = sponge.squeeze(32);
+
+            // 6. Verify authentication tag
+            sponge.init(256);
+            sponge.absorb(ka);
+            sponge.absorb(c);
+            byte[] tPrime = sponge.digest();
+
+            // Compare tags
+            if (!java.util.Arrays.equals(t, tPrime)) {
+                throw new IOException("Authentication failed: Invalid tag");
+            }
+
+            // 7. Decrypt the message
+            sponge.init(128);
+            sponge.absorb(ke);
+            byte[] oneTimePad = sponge.squeeze(c.length);
+
+            // XOR with ciphertext to get plaintext
+            byte[] message = new byte[c.length]; // plaintext
+            for (int i = 0; i < c.length; i++) {
+                message[i] = (byte) (c[i] ^ oneTimePad[i]);
+            }
+
+            // 8. Write decrypted message to output file
+            fileOutput.write(message);
 
         } catch (IOException e) {
             System.out.println("Decryption failed: " + e);
@@ -86,6 +204,16 @@ public class Main {
 
     }
 
+    /**
+     * Generate a random nonce modulo Edwards.r.
+     * 
+     * @return a random nonce in the range [0, Edwards.r)
+     */
+    private static BigInteger genNonce() {
+        int rbytes = (Edwards.r.bitLength() + 7) >> 3;
+        return new BigInteger(RANDOM.generateSeed(rbytes << 1)).mod(Edwards.r);
+    }
+
     public static void main(String[] args) throws IOException {
         String service = args[0];
 
@@ -97,14 +225,14 @@ public class Main {
 
         try {
             if (service.equals("genkey")) {
-                if (args.length != 2) {
+                if (args.length != 3) {
                     System.out.println("Usage: java Main genkey <public_key_file> <passphrase> [options]");
                     return;
                 }
 
                 // genkey();
             } else if (service.equals("ecencrypt")) {
-                if (args.length != 3) {
+                if (args.length != 4) {
                     System.out.println(
                             "Usage: java Main ecencrypt <input_file> <output_file> <public_key_file> [options]");
                     return;
@@ -112,21 +240,21 @@ public class Main {
 
                 // ecencrypt();
             } else if (service.equals("ecdecrypt")) {
-                if (args.length != 3) {
+                if (args.length != 4) {
                     System.out.println("Usage: java Main ecdecrypt <input_file> <output_file> <passphrase> [options]");
                     return;
                 }
 
                 // ecdecrypt();
             } else if (service.equals("sign")) {
-                if (args.length != 3) {
+                if (args.length != 4) {
                     System.out.println("Usage: java Main sign <signature_file> <input_file> <passphrase> [options]");
                     return;
                 }
 
                 // sign();
             } else if (service.equals("verify")) {
-                if (args.length != 3) {
+                if (args.length != 4) {
                     System.out.println(
                             "Usage: java Main verify <input_file> <signature_file> <public_key_file> [options]");
                     return;
