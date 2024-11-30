@@ -1,6 +1,7 @@
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 
 public class Main {
@@ -11,16 +12,16 @@ public class Main {
 
     /**
      * Generates a private/public key pair based on a provided passphrase, returns
-     * the private key, and optionally writes the public key (which is a point on 
+     * the private key, and optionally writes the public key (which is a point on
      * an elliptic curve) to a file.
      * 
      * Note for reading a public key file: the first byte of the public key output 
      * file corresponds to least significant byte of the x-coordinate of the key, 
      * and the remaining bytes contain the bytes of the y-coordinate.
      * 
-     * @param publicKeyPath file path to write the public key to, or null if the 
-     * public key should not be written to a file
-     * @param passphrase the passphrase from which to generate the key pair
+     * @param publicKeyPath file path to write the public key to, or null if the
+     *                      public key should not be written to a file
+     * @param passphrase    the passphrase from which to generate the key pair
      * @return the private key
      */
     private static BigInteger genkey(String publicKeyPath, String passphrase) {
@@ -28,7 +29,7 @@ public class Main {
         sponge.init(128);
         sponge.absorb(passphrase.getBytes());
         BigInteger s = new BigInteger(sponge.squeeze(256)).mod(Edwards.r);
-        
+
         Edwards curve = new Edwards();
         Edwards.Point v = curve.gen().mul(s);
 

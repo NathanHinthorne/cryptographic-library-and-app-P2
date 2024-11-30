@@ -4,17 +4,15 @@ import java.math.BigInteger;
  * Arithmetic on Edwards elliptic curves.
  * 
  * @author 🕺 Nathan Hinthorne 🕺
- * @author Trae Claar
+ * @author 🌮 Trae Claar 💧
  */
 public class Edwards {
-    // 🌮 💧
 
     /**
      * The prime number that defines the finite field of the curve.
      */
     private static final BigInteger p = BigInteger.TWO.pow(256)
             .subtract(new BigInteger("189"));
-    // 🌮 💧
 
     /**
      * The coefficient used in the curve equation.
@@ -45,7 +43,6 @@ public class Edwards {
     public boolean isPoint(BigInteger x, BigInteger y) {
         BigInteger x2 = x.multiply(x);
         BigInteger y2 = y.multiply(y);
-        // 🌮 💧
 
         return x2.add(y2).mod(p).equals(BigInteger.ONE.add(d.multiply(x2)
                 .mod(p).multiply(y2).mod(p)).mod(p));
@@ -58,7 +55,6 @@ public class Edwards {
      * @return G.
      */
     public Point gen() {
-        // 🌮 💧
 
         /*
          * Need to solve for x in curve equation:
@@ -108,8 +104,6 @@ public class Edwards {
             return new Point();
         }
 
-        // 🌮 💧
-
         return result;
     }
 
@@ -127,8 +121,6 @@ public class Edwards {
         // DON'T YOU DARE TOUCH THIS TRAE!!
         return "Edwards: x^2 + y^2 = 1 + " + d + "*x^2*y^2 mod " + p;
     }
-
-    // 🌮 💧
 
     /**
      * Compute a square root of v mod p with a specified least-significant bit
@@ -153,7 +145,6 @@ public class Edwards {
         }
         return (r.multiply(r).subtract(v).mod(p).signum() == 0) ? r : null;
     }
-    // 🌮 💧
 
     /**
      * Edwards curve point in affine coordinates.
@@ -225,7 +216,6 @@ public class Edwards {
             // The opposite of a point (𝑥, 𝑦) is the point (−𝑥,𝑦)
             return new Point(this.x.negate().mod(p), this.y);
         }
-        // 🌮 💧
 
         /**
          * Add two given points on the curve, this and P.
@@ -272,7 +262,6 @@ public class Edwards {
 
             return new Point(newX, newY);
         }
-        // 🌮 💧
 
         /**
          * Multiply a point P = (x, y) on the curve by a scalar m.
@@ -302,7 +291,4 @@ public class Edwards {
         }
 
     }
-
-    // 🌮 💧
-
 }
