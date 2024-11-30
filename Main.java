@@ -62,16 +62,16 @@ public class Main {
      * Encrypts a message using the provided public key and passphrase.
      * 
      * @param publicKeyPath file path to the public key to use for encryption
-     * @param messagePath   file path to the message to encrypt
+     * @param inputPath     file path to the message to encrypt
      * @param outputPath    file path to write the encrypted message to
      * 
      * @throws IOException
      */
-    private static void ecencrypt(String publicKeyPath, String messagePath, String outputPath) {
+    private static void ecencrypt(String inputPath, String outputPath, String publicKeyPath) {
 
         // reads the raw bytes directly, preserving the exact data without any text
         // interpretation.
-        try (FileInputStream messageFile = new FileInputStream(messagePath);
+        try (FileInputStream messageFile = new FileInputStream(inputPath);
                 FileInputStream publicKeyFile = new FileInputStream(publicKeyPath);
                 FileOutputStream fileOutput = new FileOutputStream(outputPath)) {
 
@@ -139,7 +139,7 @@ public class Main {
      * 
      * @throws IOException
      */
-    private static void ecdecrypt(String passphrase, String inputPath, String outputPath) {
+    private static void ecdecrypt(String inputPath, String outputPath, String passphrase) {
 
         try (FileInputStream fileInput = new FileInputStream(inputPath);
                 FileOutputStream fileOutput = new FileOutputStream(outputPath)) {
@@ -236,7 +236,7 @@ public class Main {
                     return;
                 }
 
-                // genkey();
+                genkey(args[1], args[2]);
             } else if (service.equals("ecencrypt")) {
                 if (args.length != 4) {
                     System.out.println(
@@ -244,14 +244,14 @@ public class Main {
                     return;
                 }
 
-                // ecencrypt();
+                ecencrypt(args[1], args[2], args[3]);
             } else if (service.equals("ecdecrypt")) {
                 if (args.length != 4) {
                     System.out.println("Usage: java Main ecdecrypt <input_file> <output_file> <passphrase> [options]");
                     return;
                 }
 
-                // ecdecrypt();
+                ecdecrypt(args[1], args[2], args[3]);
             } else if (service.equals("sign")) {
                 if (args.length != 4) {
                     System.out.println("Usage: java Main sign <signature_file> <input_file> <passphrase> [options]");
