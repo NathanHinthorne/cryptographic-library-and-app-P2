@@ -82,8 +82,8 @@ public class Main {
             byte[] vYBytes = publicKeyFile.readAllBytes();
             BigInteger vY = new BigInteger(vYBytes);
 
-            boolean lsbIsZero = (vXLsb & 1) == 0;
-            Edwards.Point V = curve.getPoint(vY, lsbIsZero);
+            boolean lsbIsOne = (vXLsb & 1) == 1;
+            Edwards.Point V = curve.getPoint(vY, lsbIsOne);
 
             // 1. Generate random nonce k
             BigInteger k = genNonce();
@@ -150,23 +150,21 @@ public class Main {
             byte[] zYBytes = fileInput.readNBytes(33);
 
             BigInteger zY = new BigInteger(zYBytes);
-            boolean lsbIsZero = (zXLsb & 1) == 0;
-            Edwards.Point Z = curve.getPoint(zY, lsbIsZero);
+            boolean lsbIsOne = (zXLsb & 1) == 1;
+            Edwards.Point Z = curve.getPoint(zY, lsbIsOne);
 
             // 2. Read the ciphertext and tag
             byte[] c = fileInput.readNBytes(fileInput.available() - 32); // remaining bytes minus tag
             byte[] t = fileInput.readNBytes(32); // last 32 bytes are the tag
 
             // 3. Recompute private key from passphrase
-            SHA3SHAKE sponge = new SHA3SHAKE();
-            sponge.init(128);
-            sponge.absorb(passphrase.getBytes());
-            BigInteger s = new BigInteger(sponge.squeeze(256)).mod(Edwards.r);
+            BigInteger s = genkey(null, passphrase);
 
             // 4. Compute W = s*Z
             Edwards.Point W = Z.mul(s);
 
             // 5. Derive keys ka and ke
+            SHA3SHAKE sponge = new SHA3SHAKE();
             sponge.init(256);
             sponge.absorb(W.y.toByteArray());
             byte[] ka = sponge.squeeze(32);
