@@ -21,8 +21,8 @@ public class Main {
      * the private key, and optionally writes the public key (which is a point on
      * an elliptic curve) to a file.
      * 
-     * Note for reading a public key file: the first byte of the public key output 
-     * file corresponds to least significant byte of the x-coordinate of the key, 
+     * Note for reading a public key file: the first byte of the public key output
+     * file corresponds to least significant byte of the x-coordinate of the key,
      * and the remaining bytes contain the bytes of the y-coordinate.
      * 
      * @param publicKeyPath file path to write the public key to, or null if the
@@ -78,13 +78,12 @@ public class Main {
             // 0. Reconstruct the public key from the file
             Edwards curve = new Edwards();
 
-            // find public key (first 33 bytes is x coordinate)
-            byte[] xBytes = publicKeyFile.readNBytes(33);
-            byte[] yBytes = publicKeyFile.readNBytes(33);
-            BigInteger yBigInt = new BigInteger(yBytes);
+            byte vXLsb = publicKeyFile.readNBytes(1)[0];
+            byte[] vYBytes = publicKeyFile.readAllBytes();
+            BigInteger vY = new BigInteger(vYBytes);
 
-            boolean lsbIsZero = (xBytes[32] & 1) == 0;
-            Edwards.Point V = curve.getPoint(yBigInt, lsbIsZero);
+            boolean lsbIsZero = (vXLsb & 1) == 0;
+            Edwards.Point V = curve.getPoint(vY, lsbIsZero);
 
             // 1. Generate random nonce k
             BigInteger k = genNonce();
@@ -123,7 +122,8 @@ public class Main {
 
             // 6. Write full cryptogram to output
             // Cryptogram is (Z, ciphertext, tag)
-            fileOutput.write(Z.x.toByteArray());
+            byte[] zXBytes = Z.x.toByteArray();
+            fileOutput.write(zXBytes[zXBytes.length - 1]);
             fileOutput.write(Z.y.toByteArray());
             fileOutput.write(c);
             fileOutput.write(t);
@@ -146,12 +146,12 @@ public class Main {
 
             // 1. Reconstruct the point Z from the input file
             Edwards curve = new Edwards();
-            byte[] xBytes = fileInput.readNBytes(33);
-            byte[] yBytes = fileInput.readNBytes(33);
+            byte zXLsb = fileInput.readNBytes(1)[0];
+            byte[] zYBytes = fileInput.readNBytes(33);
 
-            BigInteger yBigInt = new BigInteger(yBytes);
-            boolean lsbIsZero = (xBytes[32] & 1) == 0;
-            Edwards.Point Z = curve.getPoint(yBigInt, lsbIsZero);
+            BigInteger zY = new BigInteger(zYBytes);
+            boolean lsbIsZero = (zXLsb & 1) == 0;
+            Edwards.Point Z = curve.getPoint(zY, lsbIsZero);
 
             // 2. Read the ciphertext and tag
             byte[] c = fileInput.readNBytes(fileInput.available() - 32); // remaining bytes minus tag
