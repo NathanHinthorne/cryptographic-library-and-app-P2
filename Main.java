@@ -14,6 +14,10 @@ public class Main {
      * the private key, and optionally writes the public key (which is a point on 
      * an elliptic curve) to a file.
      * 
+     * Note for reading a public key file: the first byte of the public key output 
+     * file corresponds to least significant byte of the x-coordinate of the key, 
+     * and the remaining bytes contain the bytes of the y-coordinate.
+     * 
      * @param publicKeyPath file path to write the public key to, or null if the 
      * public key should not be written to a file
      * @param passphrase the passphrase from which to generate the key pair
@@ -33,9 +37,11 @@ public class Main {
             v = v.negate();
         }
 
+        byte[] x = v.x.toByteArray();
+
         if (publicKeyPath != null) {
             try (FileOutputStream fileOutput = new FileOutputStream(publicKeyPath)) {
-                fileOutput.write(v.x.toByteArray());
+                fileOutput.write(x[x.length - 1]);
                 fileOutput.write(v.y.toByteArray());
             } catch (IOException e) {
                 System.out.println("Failed to write public key to requested file: " + e);
