@@ -200,12 +200,84 @@ public class Main {
         }
     }
 
-    private static void sign() {
+    /**
+     * Compute the signature of a file under a specified passphrase and 
+     * write it to a file.
+     * 
+     * @param inputPath file path to the file to sign
+     * @param outputPath fle path to the file to write the signature to
+     * @param passphrase the passphrase used to generate the private key
+     */
+    private static void sign(String inputPath, String outputPath, String passphrase) {
+        try (FileInputStream inputFile = new FileInputStream(inputPath);
+            FileOutputStream outputFile = new FileOutputStream(outputPath)) {
 
+            BigInteger s = genkey(null, passphrase);
+            BigInteger k = genNonce();
+            byte[] m = inputFile.readAllBytes();
+
+            SHA3SHAKE sponge = new SHA3SHAKE();
+            sponge.init(128);
+            sponge.absorb(s.toByteArray());
+            sponge.absorb(m);
+            sponge.absorb(k.toByteArray());
+            byte[] kBytes = sponge.squeeze(512);
+            k = (new BigInteger(kBytes)).mod(Edwards.r);
+
+            Edwards curve = new Edwards();
+            Edwards.Point u = curve.gen().mul(k);
+
+            sponge.init(256);
+            sponge.absorb(u.y.toByteArray());
+            sponge.absorb(m);
+            BigInteger h = (new BigInteger(sponge.digest())).mod(Edwards.r);
+            BigInteger z = k.subtract(h.multiply(s)).mod(Edwards.r);
+
+            outputFile.write(h.toByteArray());
+            outputFile.write(z.toByteArray());
+        } catch (IOException e) {
+            System.out.println("Signing failed: " + e);
+        }
     }
 
-    private static void verify() {
+    /**
+     * Verify that a provided signature file corresponds to a given file
+     * under a certain public key. Outputs a message indicating whether
+     * the signature matches.
+     * 
+     * @param dataPath file path to the plaintext document that was signed
+     * @param sigPath file path to the signature file
+     * @param publicKeyPath file path to the public key file
+     */
+    private static void verify(String dataPath, String sigPath, String publicKeyPath) {
+        try (FileInputStream dataFile = new FileInputStream(dataPath);
+            FileInputStream sigFile = new FileInputStream(sigPath);
+            FileInputStream keyFile = new FileInputStream(publicKeyPath)) {
 
+            byte[] m = dataFile.readAllBytes();
+            BigInteger h = new BigInteger(sigFile.readNBytes(32));
+            BigInteger z = new BigInteger(sigFile.readAllBytes());
+
+            Edwards curve = new Edwards();
+            boolean xLsb = keyFile.readNBytes(1)[0] % 2 == 1;
+            Edwards.Point v = curve.getPoint(new BigInteger(keyFile.readAllBytes()), xLsb);
+
+            Edwards.Point uPrime = curve.gen().mul(z).add(v.mul(h));
+
+            SHA3SHAKE sponge = new SHA3SHAKE();
+            sponge.init(256);
+            sponge.absorb(uPrime.y.toByteArray());
+            sponge.absorb(m);
+            BigInteger hPrime = (new BigInteger(sponge.digest())).mod(Edwards.r);
+
+            if (h.equals(hPrime)) {
+                System.out.println("Signature verified: document is authentic.");
+            } else {
+                System.out.println("Could not verify signature: document may not be authentic.");
+            }
+        } catch (IOException e) {
+            System.out.println("Verification failed: " + e);
+        }
     }
 
     /**
@@ -256,7 +328,7 @@ public class Main {
                     return;
                 }
 
-                // sign();
+                sign(args[2], args[1], args[3]);
             } else if (service.equals("verify")) {
                 if (args.length != 4) {
                     System.out.println(
@@ -264,7 +336,7 @@ public class Main {
                     return;
                 }
 
-                // verify();
+                verify(args[1], args[2], args[3]);
             }
         } catch (NumberFormatException e) {
             System.out.println("Invalid number format: " + e.getMessage());
