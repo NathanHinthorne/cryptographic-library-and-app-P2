@@ -134,10 +134,6 @@ public class Main {
             int offset = 33 - zY.length;
             System.arraycopy(zY, 0, paddedZY, offset, zY.length);
             fileOutput.write(paddedZY);
-            System.out.println("y: " + bytesToHex(zY));
-            System.out.println("y length: " + zY.length);
-            System.out.println("padded y: " + bytesToHex(paddedZY));
-            System.out.println("padded y length: " + paddedZY.length);
 
             fileOutput.write(c);
             fileOutput.write(t);
