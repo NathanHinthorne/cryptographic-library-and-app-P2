@@ -128,7 +128,17 @@ public class Main {
             // Cryptogram is (Z, ciphertext, tag)
             byte[] zXBytes = z.x.toByteArray();
             fileOutput.write(zXBytes[zXBytes.length - 1]);
-            fileOutput.write(z.y.toByteArray());
+
+            byte[] zY = z.y.toByteArray();
+            byte[] paddedZY = new byte[33];
+            int offset = 33 - zY.length;
+            System.arraycopy(zY, 0, paddedZY, offset, zY.length);
+            fileOutput.write(paddedZY);
+            System.out.println("y: " + bytesToHex(zY));
+            System.out.println("y length: " + zY.length);
+            System.out.println("padded y: " + bytesToHex(paddedZY));
+            System.out.println("padded y length: " + paddedZY.length);
+
             fileOutput.write(c);
             fileOutput.write(t);
 
