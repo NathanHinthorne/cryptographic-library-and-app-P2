@@ -337,7 +337,7 @@ public class Main {
                 ecdecrypt(args[1], args[2], args[3]);
             } else if (service.equals("sign")) {
                 if (args.length != 4) {
-                    System.out.println("Usage: java Main sign <signature_file> <output_file> <passphrase> [options]");
+                    System.out.println("Usage: java Main sign <signature_file> <input_file> <passphrase> [options]");
                     return;
                 }
 
