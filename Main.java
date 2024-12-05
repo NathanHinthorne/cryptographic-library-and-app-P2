@@ -61,9 +61,9 @@ public class Main {
     /**
      * Encrypts a message using the provided public key and passphrase.
      * 
-     * @param publicKeyPath file path to the public key to use for encryption
      * @param inputPath     file path to the message to encrypt
      * @param outputPath    file path to write the encrypted message to
+     * @param publicKeyPath file path to the public key to use for encryption
      * 
      * @throws IOException
      */
@@ -75,7 +75,7 @@ public class Main {
                 FileInputStream publicKeyFile = new FileInputStream(publicKeyPath);
                 FileOutputStream fileOutput = new FileOutputStream(outputPath)) {
 
-            // 0. Reconstruct the public key from the file
+            // 1. Reconstruct the public key from the file
             Edwards curve = new Edwards();
 
             byte vXLsb = publicKeyFile.readNBytes(1)[0];
@@ -83,24 +83,24 @@ public class Main {
             BigInteger vY = new BigInteger(vYBytes);
 
             boolean lsbIsOne = (vXLsb & 1) == 1;
-            Edwards.Point V = curve.getPoint(vY, lsbIsOne);
+            Edwards.Point v = curve.getPoint(vY, lsbIsOne);
 
-            // 1. Generate random nonce k
+            // 2. Generate random nonce k
             BigInteger k = genNonce();
 
-            // 2. Compute key exchange points (W <- k*V, Z <- k*G)
-            Edwards.Point W = V.mul(k); // W = k*V
-            Edwards.Point Z = curve.gen().mul(k); // Z = k*G
+            // 3. Compute key exchange points (W <- k*V, Z <- k*G)
+            Edwards.Point w = v.mul(k); // W = k*V
+            Edwards.Point z = curve.gen().mul(k); // Z = k*G
 
-            // 3. Key derivation
+            // 4. Key derivation
             SHA3SHAKE sponge = new SHA3SHAKE();
             sponge.init(256);
-            sponge.absorb(W.y.toByteArray());
+            sponge.absorb(w.y.toByteArray());
 
             byte[] ka = sponge.squeeze(32); // 256 bits
             byte[] ke = sponge.squeeze(32); // 256 bits
 
-            // 4. Symmetric encryption
+            // 5. Symmetric encryption
             sponge.init(128);
             sponge.absorb(ke);
 
@@ -114,17 +114,17 @@ public class Main {
                 c[i] = (byte) (message[i] ^ oneTimePad[i]);
             }
 
-            // 5. Authentication tag generation
+            // 6. Authentication tag generation
             sponge.init(256);
             sponge.absorb(ka);
             sponge.absorb(c);
             byte[] t = sponge.digest();
 
-            // 6. Write full cryptogram to output
+            // 7. Write full cryptogram to output
             // Cryptogram is (Z, ciphertext, tag)
-            byte[] zXBytes = Z.x.toByteArray();
+            byte[] zXBytes = z.x.toByteArray();
             fileOutput.write(zXBytes[zXBytes.length - 1]);
-            fileOutput.write(Z.y.toByteArray());
+            fileOutput.write(z.y.toByteArray());
             fileOutput.write(c);
             fileOutput.write(t);
 
@@ -134,8 +134,11 @@ public class Main {
     }
 
     /**
-     * Decrypt the input ciphertext using XOR with a key derived from the
-     * passphrase.
+     * Decrypt the input ciphertext with a private key derived from the passphrase.
+     * 
+     * @param inputPath  file path to the encrypted message to decrypt
+     * @param outputPath file path to write the decrypted message to
+     * @param passphrase the passphrase used to decrypt the message
      * 
      * @throws IOException
      */
@@ -151,7 +154,7 @@ public class Main {
 
             BigInteger zY = new BigInteger(zYBytes);
             boolean lsbIsOne = (zXLsb & 1) == 1;
-            Edwards.Point Z = curve.getPoint(zY, lsbIsOne);
+            Edwards.Point z = curve.getPoint(zY, lsbIsOne);
 
             // 2. Read the ciphertext and tag
             byte[] c = fileInput.readNBytes(fileInput.available() - 32); // remaining bytes minus tag
@@ -161,12 +164,12 @@ public class Main {
             BigInteger s = genkey(null, passphrase);
 
             // 4. Compute W = s*Z
-            Edwards.Point W = Z.mul(s);
+            Edwards.Point w = z.mul(s);
 
             // 5. Derive keys ka and ke
             SHA3SHAKE sponge = new SHA3SHAKE();
             sponge.init(256);
-            sponge.absorb(W.y.toByteArray());
+            sponge.absorb(w.y.toByteArray());
             byte[] ka = sponge.squeeze(32);
             byte[] ke = sponge.squeeze(32);
 
@@ -175,6 +178,9 @@ public class Main {
             sponge.absorb(ka);
             sponge.absorb(c);
             byte[] tPrime = sponge.digest();
+
+            System.out.println("Original tag (t):   " + bytesToHex(t));
+            System.out.println("Computed tag (t'): " + bytesToHex(tPrime)); // should match t
 
             // Compare tags
             if (!java.util.Arrays.equals(t, tPrime)) {
@@ -201,16 +207,16 @@ public class Main {
     }
 
     /**
-     * Compute the signature of a file under a specified passphrase and 
+     * Compute the signature of a file under a specified passphrase and
      * write it to a file.
      * 
-     * @param inputPath file path to the file to sign
+     * @param inputPath  file path to the file to sign
      * @param outputPath fle path to the file to write the signature to
      * @param passphrase the passphrase used to generate the private key
      */
     private static void sign(String inputPath, String outputPath, String passphrase) {
         try (FileInputStream inputFile = new FileInputStream(inputPath);
-            FileOutputStream outputFile = new FileOutputStream(outputPath)) {
+                FileOutputStream outputFile = new FileOutputStream(outputPath)) {
 
             BigInteger s = genkey(null, passphrase);
             BigInteger k = genNonce();
@@ -245,14 +251,14 @@ public class Main {
      * under a certain public key. Outputs a message indicating whether
      * the signature matches.
      * 
-     * @param dataPath file path to the plaintext document that was signed
-     * @param sigPath file path to the signature file
+     * @param dataPath      file path to the plaintext document that was signed
+     * @param sigPath       file path to the signature file
      * @param publicKeyPath file path to the public key file
      */
     private static void verify(String dataPath, String sigPath, String publicKeyPath) {
         try (FileInputStream dataFile = new FileInputStream(dataPath);
-            FileInputStream sigFile = new FileInputStream(sigPath);
-            FileInputStream keyFile = new FileInputStream(publicKeyPath)) {
+                FileInputStream sigFile = new FileInputStream(sigPath);
+                FileInputStream keyFile = new FileInputStream(publicKeyPath)) {
 
             byte[] m = dataFile.readAllBytes();
             BigInteger h = new BigInteger(sigFile.readNBytes(32));
@@ -347,5 +353,14 @@ public class Main {
         return (service.equals("genkey") || service.equals("ecencrypt") ||
                 service.equals("ecdecrypt") || service.equals("sign") ||
                 service.equals("verify"));
+    }
+
+    // Debugging method to convert bytes to hex
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }
