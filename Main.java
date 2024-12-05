@@ -189,9 +189,6 @@ public class Main {
             sponge.absorb(c);
             byte[] tPrime = sponge.digest();
 
-            System.out.println("Original tag (t):   " + bytesToHex(t));
-            System.out.println("Computed tag (t'): " + bytesToHex(tPrime)); // should match t
-
             // Compare tags
             if (!java.util.Arrays.equals(t, tPrime)) {
                 throw new IOException("Authentication failed: Invalid tag");
