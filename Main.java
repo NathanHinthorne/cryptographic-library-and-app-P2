@@ -75,9 +75,9 @@ public class Main {
                 FileInputStream publicKeyFile = new FileInputStream(publicKeyPath);
                 FileOutputStream fileOutput = new FileOutputStream(outputPath)) {
 
-            // 1. Reconstruct the public key from the file
             Edwards curve = new Edwards();
 
+            // 1. Reconstruct the public key from the file
             byte vXLsb = publicKeyFile.readNBytes(1)[0];
             byte[] vYBytes = publicKeyFile.readAllBytes();
             BigInteger vY = new BigInteger(vYBytes);
@@ -96,9 +96,13 @@ public class Main {
             SHA3SHAKE sponge = new SHA3SHAKE();
             sponge.init(256);
             sponge.absorb(w.y.toByteArray());
+            byte[] derivedKey = sponge.squeeze(64); // 512 bits total
 
-            byte[] ka = sponge.squeeze(32); // 256 bits
-            byte[] ke = sponge.squeeze(32); // 256 bits
+            // Split the derived key into ka and ke (each 256 bits)
+            byte[] ka = new byte[32];
+            byte[] ke = new byte[32];
+            System.arraycopy(derivedKey, 0, ka, 0, 32);
+            System.arraycopy(derivedKey, 32, ke, 0, 32);
 
             // 5. Symmetric encryption
             sponge.init(128);
@@ -147,8 +151,9 @@ public class Main {
         try (FileInputStream fileInput = new FileInputStream(inputPath);
                 FileOutputStream fileOutput = new FileOutputStream(outputPath)) {
 
-            // 1. Reconstruct the point Z from the input file
             Edwards curve = new Edwards();
+
+            // 1. Reconstruct the point Z from the input file
             byte zXLsb = fileInput.readNBytes(1)[0];
             byte[] zYBytes = fileInput.readNBytes(33);
 
@@ -170,8 +175,13 @@ public class Main {
             SHA3SHAKE sponge = new SHA3SHAKE();
             sponge.init(256);
             sponge.absorb(w.y.toByteArray());
-            byte[] ka = sponge.squeeze(32);
-            byte[] ke = sponge.squeeze(32);
+            byte[] derivedKey = sponge.squeeze(64); // 512 bits total
+
+            // Split the derived key into ka and ke (each 256 bits)
+            byte[] ka = new byte[32];
+            byte[] ke = new byte[32];
+            System.arraycopy(derivedKey, 0, ka, 0, 32);
+            System.arraycopy(derivedKey, 32, ke, 0, 32);
 
             // 6. Verify authentication tag
             sponge.init(256);
@@ -330,7 +340,7 @@ public class Main {
                 ecdecrypt(args[1], args[2], args[3]);
             } else if (service.equals("sign")) {
                 if (args.length != 4) {
-                    System.out.println("Usage: java Main sign <signature_file> <input_file> <passphrase> [options]");
+                    System.out.println("Usage: java Main sign <signature_file> <output_file> <passphrase> [options]");
                     return;
                 }
 
