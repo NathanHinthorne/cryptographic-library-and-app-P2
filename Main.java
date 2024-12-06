@@ -71,75 +71,10 @@ public class Main {
 
         // reads the raw bytes directly, preserving the exact data without any text
         // interpretation.
-        try (FileInputStream messageFile = new FileInputStream(inputPath);
-                FileInputStream publicKeyFile = new FileInputStream(publicKeyPath);
-                FileOutputStream fileOutput = new FileOutputStream(outputPath)) {
-
-            Edwards curve = new Edwards();
-
-            // 1. Reconstruct the public key from the file
-            byte vXLsb = publicKeyFile.readNBytes(1)[0];
-            byte[] vYBytes = publicKeyFile.readAllBytes();
-            BigInteger vY = new BigInteger(vYBytes);
-
-            boolean lsbIsOne = (vXLsb & 1) == 1;
-            Edwards.Point v = curve.getPoint(vY, lsbIsOne);
-
-            // 2. Generate random nonce k
-            BigInteger k = genNonce();
-
-            // 3. Compute key exchange points (W <- k*V, Z <- k*G)
-            Edwards.Point w = v.mul(k); // W = k*V
-            Edwards.Point z = curve.gen().mul(k); // Z = k*G
-
-            // 4. Key derivation
-            SHA3SHAKE sponge = new SHA3SHAKE();
-            sponge.init(256);
-            sponge.absorb(w.y.toByteArray());
-            byte[] derivedKey = sponge.squeeze(64); // 512 bits total
-
-            // Split the derived key into ka and ke (each 256 bits)
-            byte[] ka = new byte[32];
-            byte[] ke = new byte[32];
-            System.arraycopy(derivedKey, 0, ka, 0, 32);
-            System.arraycopy(derivedKey, 32, ke, 0, 32);
-
-            // 5. Symmetric encryption
-            sponge.init(128);
-            sponge.absorb(ke);
-
-            // squeeze as many bytes as the message length
-            byte[] message = messageFile.readAllBytes();
-            byte[] oneTimePad = sponge.squeeze(message.length);
-
-            // XOR with message
-            byte[] c = new byte[message.length]; // ciphertext
-            for (int i = 0; i < message.length; i++) {
-                c[i] = (byte) (message[i] ^ oneTimePad[i]);
-            }
-
-            // 6. Authentication tag generation
-            sponge.init(256);
-            sponge.absorb(ka);
-            sponge.absorb(c);
-            byte[] t = sponge.digest();
-
-            // 7. Write full cryptogram to output
-            // Cryptogram is (Z, ciphertext, tag)
-            byte[] zXBytes = z.x.toByteArray();
-            fileOutput.write(zXBytes[zXBytes.length - 1]);
-
-            byte[] zY = z.y.toByteArray();
-            byte[] paddedZY = new byte[33];
-            int offset = 33 - zY.length;
-            System.arraycopy(zY, 0, paddedZY, offset, zY.length);
-            fileOutput.write(paddedZY);
-
-            fileOutput.write(c);
-            fileOutput.write(t);
-
+        try (FileInputStream messageFile = new FileInputStream(inputPath)) {
+            writeCryptogram(messageFile.readAllBytes(), outputPath, publicKeyPath);
         } catch (IOException e) {
-            System.out.println("Failed to write cryptogram to requested file: " + e);
+            System.out.println("Failed to read input file: " + e);
         }
     }
 
@@ -231,29 +166,8 @@ public class Main {
         try (FileInputStream inputFile = new FileInputStream(inputPath);
                 FileOutputStream outputFile = new FileOutputStream(outputPath)) {
 
-            BigInteger s = genkey(null, passphrase);
-            BigInteger k = genNonce();
             byte[] m = inputFile.readAllBytes();
-
-            SHA3SHAKE sponge = new SHA3SHAKE();
-            sponge.init(128);
-            sponge.absorb(s.toByteArray());
-            sponge.absorb(m);
-            sponge.absorb(k.toByteArray());
-            byte[] kBytes = sponge.squeeze(512);
-            k = (new BigInteger(kBytes)).mod(Edwards.r);
-
-            Edwards curve = new Edwards();
-            Edwards.Point u = curve.gen().mul(k);
-
-            sponge.init(256);
-            sponge.absorb(u.y.toByteArray());
-            sponge.absorb(m);
-            BigInteger h = (new BigInteger(sponge.digest())).mod(Edwards.r);
-            BigInteger z = k.subtract(h.multiply(s)).mod(Edwards.r);
-
-            outputFile.write(h.toByteArray());
-            outputFile.write(z.toByteArray());
+            outputFile.write(genSignature(passphrase, m));
         } catch (IOException e) {
             System.out.println("Signing failed: " + e);
         }
@@ -274,7 +188,7 @@ public class Main {
                 FileInputStream keyFile = new FileInputStream(publicKeyPath)) {
 
             byte[] m = dataFile.readAllBytes();
-            BigInteger h = new BigInteger(sigFile.readNBytes(32));
+            BigInteger h = new BigInteger(sigFile.readNBytes(modRMaxBytes()));
             BigInteger z = new BigInteger(sigFile.readAllBytes());
 
             Edwards curve = new Edwards();
@@ -300,6 +214,165 @@ public class Main {
     }
 
     /**
+     * Compute the signature of the provided input file under a specified passphrase, 
+     * then generate a cryptogram containing the signature and message under the 
+     * provided public key. 
+     * 
+     * Note for reading the decrypted result: the first 62 bytes will contain the
+     * signature, and the remaining bytes will contain the message.
+     * 
+     * @param inputPath the path to the file to sign/encrypt
+     * @param outputPath the path to write the cryptogram to
+     * @param passphrase the passphrase with which to sign the message
+     * @param publicKeyPath the path to the public key file to be used in encryption
+     */
+    private static void signencrypt(String inputPath, String outputPath, String passphrase, 
+            String publicKeyPath) {
+
+        try (FileInputStream inputFile = new FileInputStream(inputPath)) {
+            byte[] m = inputFile.readAllBytes();
+
+            byte[] sig = genSignature(passphrase, m);
+            byte[] plaintext = new byte[m.length + sig.length];
+            System.arraycopy(sig, 0, plaintext, 0, sig.length);
+            System.arraycopy(m, 0, plaintext, sig.length, m.length);
+
+            writeCryptogram(m, outputPath, publicKeyPath);
+        } catch (IOException e) {
+            System.out.println("Failed to read input file: " + e);
+        }
+    }
+
+    /**
+     * Encrypt the provided message under the public key and write it to a file.
+     * 
+     * @param message the message to encrypt
+     * @param outputPath the path to write the cryptogram
+     * @param publicKeyPath path to the public key file
+     */
+    private static void writeCryptogram(byte[] message, String outputPath, String publicKeyPath) {
+
+        // reads the raw bytes directly, preserving the exact data without any text
+        // interpretation.
+        try (FileInputStream publicKeyFile = new FileInputStream(publicKeyPath);
+                FileOutputStream fileOutput = new FileOutputStream(outputPath)) {
+
+            Edwards curve = new Edwards();
+
+            // 1. Reconstruct the public key from the file
+            byte vXLsb = publicKeyFile.readNBytes(1)[0];
+            byte[] vYBytes = publicKeyFile.readAllBytes();
+            BigInteger vY = new BigInteger(vYBytes);
+
+            boolean lsbIsOne = (vXLsb & 1) == 1;
+            Edwards.Point v = curve.getPoint(vY, lsbIsOne);
+
+            // 2. Generate random nonce k
+            BigInteger k = genNonce();
+
+            // 3. Compute key exchange points (W <- k*V, Z <- k*G)
+            Edwards.Point w = v.mul(k); // W = k*V
+            Edwards.Point z = curve.gen().mul(k); // Z = k*G
+
+            // 4. Key derivation
+            SHA3SHAKE sponge = new SHA3SHAKE();
+            sponge.init(256);
+            sponge.absorb(w.y.toByteArray());
+            byte[] derivedKey = sponge.squeeze(64); // 512 bits total
+
+            // Split the derived key into ka and ke (each 256 bits)
+            byte[] ka = new byte[32];
+            byte[] ke = new byte[32];
+            System.arraycopy(derivedKey, 0, ka, 0, 32);
+            System.arraycopy(derivedKey, 32, ke, 0, 32);
+
+            // 5. Symmetric encryption
+            sponge.init(128);
+            sponge.absorb(ke);
+
+            // squeeze as many bytes as the message length
+            byte[] oneTimePad = sponge.squeeze(message.length);
+
+            // XOR with message
+            byte[] c = new byte[message.length]; // ciphertext
+            for (int i = 0; i < message.length; i++) {
+                c[i] = (byte) (message[i] ^ oneTimePad[i]);
+            }
+
+            // 6. Authentication tag generation
+            sponge.init(256);
+            sponge.absorb(ka);
+            sponge.absorb(c);
+            byte[] t = sponge.digest();
+
+            // 7. Write full cryptogram to output
+            // Cryptogram is (Z, ciphertext, tag)
+            byte[] zXBytes = z.x.toByteArray();
+            fileOutput.write(zXBytes[zXBytes.length - 1]);
+
+            byte[] zY = z.y.toByteArray();
+            byte[] paddedZY = new byte[33];
+            int offset = 33 - zY.length;
+            System.arraycopy(zY, 0, paddedZY, offset, zY.length);
+            fileOutput.write(paddedZY);
+
+            fileOutput.write(c);
+            fileOutput.write(t);
+
+        } catch (IOException e) {
+            System.out.println("Failed to write cryptogram to requested file: " + e);
+        }
+    }
+
+    /**
+     * Generate a signature of a message with a private key based on a provided 
+     * passphrase.
+     * 
+     * @param passphrase the passphrase to use for signing
+     * @param message the message to sign
+     * @return the signature of the message
+     */
+    private static byte[] genSignature(String passphrase, byte[] message) {
+        BigInteger s = genkey(null, passphrase);
+        BigInteger k = genNonce();
+
+        SHA3SHAKE sponge = new SHA3SHAKE();
+        sponge.init(128);
+        sponge.absorb(s.toByteArray());
+        sponge.absorb(message);
+        sponge.absorb(k.toByteArray());
+        byte[] kBytes = sponge.squeeze(512);
+        k = (new BigInteger(kBytes)).mod(Edwards.r);
+
+        Edwards curve = new Edwards();
+        Edwards.Point u = curve.gen().mul(k);
+
+        sponge.init(256);
+        sponge.absorb(u.y.toByteArray());
+        sponge.absorb(message);
+        BigInteger h = (new BigInteger(sponge.digest())).mod(Edwards.r);
+        BigInteger z = k.subtract(h.multiply(s)).mod(Edwards.r);
+
+        byte[] sig = new byte[modRMaxBytes() * 2];
+        byte[] hBytes = h.toByteArray();
+        byte[] zBytes = z.toByteArray();
+        System.arraycopy(hBytes, 0, sig, modRMaxBytes() - hBytes.length, modRMaxBytes());
+        System.arraycopy(zBytes, 0, sig, modRMaxBytes() * 2 - zBytes.length, modRMaxBytes());
+
+        return sig;
+    }
+
+    /**
+     * Calculate the maximum number of bytes that can be contained in the byte
+     * representation of a BigInteger mod r.
+     * 
+     * @return the maximum byte length of a BigInteger mod r
+     */
+    private static int modRMaxBytes() {
+        return Edwards.r.toByteArray().length;
+    }
+
+    /**
      * Generate a random nonce modulo Edwards.r.
      * 
      * @return a random nonce in the range [0, Edwards.r)
@@ -314,7 +387,8 @@ public class Main {
 
         if (!isValidService(service)) {
             System.out.println("Invalid service: \"" + service +
-                    "\". Must be one of \"genkey\", \"ecencrypt\", \"ecdecrypt\", \"sign\", or \"verify\".");
+                    "\". Must be one of \"genkey\", \"ecencrypt\", \"ecdecrypt\", " 
+                    + "\"sign\", \"verify\", \"signencrypt\", or \"decryptverify\".");
             return;
         }
 
@@ -356,6 +430,14 @@ public class Main {
                 }
 
                 verify(args[1], args[2], args[3]);
+            } else if (service.equals("signencrypt")) {
+                if (args.length != 5) {
+                    System.out.println(
+                            "Usage: java Main signencrypt <input_file> <output_file> <passphrase> <public_key_file> [options]");
+                    return;
+                }
+
+                signencrypt(args[1], args[2], args[3], args[4]);
             }
         } catch (NumberFormatException e) {
             System.out.println("Invalid number format: " + e.getMessage());
@@ -365,7 +447,8 @@ public class Main {
     private static boolean isValidService(String service) {
         return (service.equals("genkey") || service.equals("ecencrypt") ||
                 service.equals("ecdecrypt") || service.equals("sign") ||
-                service.equals("verify"));
+                service.equals("verify") || service.equals("signencrypt")
+                || service.equals("decryptverify"));
     }
 
     // Debugging method to convert bytes to hex
