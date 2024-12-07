@@ -55,6 +55,22 @@ public class Edwards {
      * @return G.
      */
     public Point gen() {
+        BigInteger y = BigInteger.valueOf(-4).mod(p);
+
+        // LSB of x is always zero for the generator
+        return getPoint(y, false);
+    }
+
+    /**
+     * Create a point from its y-coordinate and
+     * the least significant bit (LSB) of its x-coordinate.
+     *
+     * @param y     the y-coordinate of the desired point
+     * @param x_lsb the LSB of its x-coordinate
+     * @return point (x, y) if it exists and has order r,
+     *         otherwise the neutral element O = (0, 1)
+     */
+    public Point getPoint(BigInteger y, boolean x_lsb) {
 
         /*
          * Need to solve for x in curve equation:
@@ -70,29 +86,6 @@ public class Edwards {
          * with 𝑦0 = −4 (mod 𝑝) and x0 a certain unique even number.
          */
 
-        BigInteger y = BigInteger.valueOf(-4).mod(p);
-
-        BigInteger ySquared = y.multiply(y).mod(p);
-        BigInteger numerator = BigInteger.ONE.subtract(ySquared).mod(p);
-        BigInteger denominator = BigInteger.ONE.subtract(d.multiply(ySquared)).mod(p);
-        BigInteger v = numerator.multiply(denominator.modInverse(p)).mod(p);
-
-        // Get square root that's guaranteed to be even (LSB = 0)
-        BigInteger x = sqrt(v, p, false);
-
-        return new Point(x, y);
-    }
-
-    /**
-     * Create a point from its y-coordinate and
-     * the least significant bit (LSB) of its x-coordinate.
-     *
-     * @param y     the y-coordinate of the desired point
-     * @param x_lsb the LSB of its x-coordinate
-     * @return point (x, y) if it exists and has order r,
-     *         otherwise the neutral element O = (0, 1)
-     */
-    public Point getPoint(BigInteger y, boolean x_lsb) {
         BigInteger y2 = y.multiply(y);
         BigInteger num = BigInteger.ONE.subtract(y2).mod(p);
         BigInteger denom = BigInteger.ONE.subtract(d.multiply(y2).mod(p)).mod(p);
