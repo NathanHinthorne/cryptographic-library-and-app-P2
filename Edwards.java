@@ -3,8 +3,8 @@ import java.math.BigInteger;
 /**
  * Arithmetic on Edwards elliptic curves.
  * 
- * @author 🕺 Nathan Hinthorne 🕺
- * @author 🌮 Trae Claar 💧
+ * @author Nathan Hinthorne
+ * @author Trae Claar
  */
 public class Edwards {
 
