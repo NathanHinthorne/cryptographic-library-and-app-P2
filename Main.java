@@ -385,10 +385,110 @@ public class Main {
     public static void main(String[] args) throws IOException {
         String service = args[0];
 
+        for (int i = 0; i < args.length; i++) {
+            switch (args[i]) {
+                case "--help":
+                    switch (service) {
+                        case "genkey":
+                            System.out.println(
+                                "Usage: \n\t java Main genkey <public_key_file> <passphrase> [options]\n\n"
+                                + "Description: \n"
+                                + "\tGenerate a public key from a private key based on a passphrase.\n"
+                                + "\nArguments: \n"
+                                + "\tpublic_key_file: Path to the public key file to write to.\n"
+                                + "\tpassphrase: The passphrase to base the private key off of. \n"
+                                + "\nOptions: \n"
+                                + "\t--help: Show help.\n"
+                            );
+                            return;
+                        case "ecencrypt":
+                            System.out.println(
+                                "Usage: \n\t java Main.java ecencrypt <input_file> <output_file> <public_key_file> [options]\n\n"
+                                + "Description: \n"
+                                + "\tEncrypt a message under the provided public key.\n"
+                                + "\nArguments: \n"
+                                + "\tinput_file: Path to the input file (plaintext).\n"
+                                + "\toutput_file: Path to the output file (cryptogram). \n"
+                                + "\tpublic_key_file: Path to the public key file.\n"
+                                + "\nOptions: \n"
+                                + "\t--help: Show help.\n"
+                            );
+                            return;
+                        case "ecdecrypt":
+                            System.out.println(
+                                "Usage: \n\t java Main ecdecrypt <input_file> <output_file> <passphrase> [options]\n\n"
+                                + "Description: \n"
+                                + "\tDecrypt a cryptogram with the provided passphrase.\n"
+                                + "\nArguments: \n"
+                                + "\tinput_file: Path to the input file (cryptogram).\n"
+                                + "\toutput_file: Path to the output file (decrypted message). \n"
+                                + "\tpassphrase: Passphrase to decrypt with. \n"
+                                + "\nOptions: \n"
+                                + "\t--help: Show help.\n"
+                            );
+                            return;
+                        case "sign":
+                            System.out.println(
+                                "Usage: \n\t java Main sign <signature_file> <input_file> <passphrase> [options]\n\n"
+                                + "Description: \n"
+                                + "\tDecrypt the provided cryptogram.\n"
+                                + "\nArguments: \n"
+                                + "\tsignature_file: Path to the signature file to write to. \n"
+                                + "\tinput_file: Path to the input file to sign.\n"
+                                + "\tpassphrase: Passphrase to sign with. \n"
+                                + "\nOptions: \n"
+                                + "\t--help: Show help.\n"
+                            );
+                            return;
+                        case "verify":
+                            System.out.println(
+                                "Usage: \n\t java Main verify <input_file> <signature_file> <public_key_file> [options]\n\n"
+                                + "Description: \n"
+                                + "\tVerify that a signature file corresponds to an input file under a provided public key.\n"
+                                + "\nArguments: \n"
+                                + "\tinput_file: Path to the input file that was signed.\n"
+                                + "\tsignature_file: Path to the signature file to verify. \n"
+                                + "\tpublic_key_file: Path to the public key file.\n"
+                                + "\nOptions: \n"
+                                + "\t--help: Show help.\n"
+                            );
+                            return;
+                        case "signencrypt":
+                            System.out.println(
+                                "Usage: \n\t java Main signencrypt <input_file> <output_file> <passphrase> <public_key_file> [options]\n\n"
+                                + "Description: \n"
+                                + "\tVerify that a signature file corresponds to an input file under a provided public key.\n"
+                                + "\nArguments: \n"
+                                + "\tinput_file: Path to the input file (message).\n"
+                                + "\toutput_file: Path to the output file (cryptogram). \n"
+                                + "\tpassphrase: Passphrase to sign with. \n"
+                                + "\tpublic_key_file: Path to the public key file.\n"
+                                + "\nOptions: \n"
+                                + "\t--help: Show help.\n"
+                            );
+                            return;
+                        default: 
+                            System.out.println(
+                                "Usage: \n\t java Main.java <command> [options]\n\n"
+                                + "Commands: \n"
+                                + "\tgenkey: Generate a public key.\n"
+                                + "\tecencrypt: Encrypt a file.\n"
+                                + "\tecdecrypt: Decrypt a file.\n"
+                                + "\tsign: Compute the signature of a file.\n"
+                                + "\tverify: Verify the signature of a file.\n"
+                                + "\tsignencrypt: Encrypt a file and its signature.\n"
+                                + "\nGeneral Options: \n"
+                                + "\t--help: Show help.\n"
+                            );
+                            return;
+                    }   
+            }
+        }
+
         if (!isValidService(service)) {
             System.out.println("Invalid service: \"" + service +
                     "\". Must be one of \"genkey\", \"ecencrypt\", \"ecdecrypt\", " 
-                    + "\"sign\", \"verify\", \"signencrypt\", or \"decryptverify\".");
+                    + "\"sign\", \"verify\", or \"signencrypt\".");
             return;
         }
 
@@ -447,8 +547,7 @@ public class Main {
     private static boolean isValidService(String service) {
         return (service.equals("genkey") || service.equals("ecencrypt") ||
                 service.equals("ecdecrypt") || service.equals("sign") ||
-                service.equals("verify") || service.equals("signencrypt")
-                || service.equals("decryptverify"));
+                service.equals("verify") || service.equals("signencrypt"));
     }
 
     // Debugging method to convert bytes to hex
