@@ -5,10 +5,11 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 
 /**
+ * This program offers several cryptographic services based on elliptic curve 
+ * cryptography.
  * 
- * 
- * @author 🕺 Nathan Hinthorne 🕺
- * @author 🌮 Trae Claar 💧
+ * @author Nathan Hinthorne
+ * @author Trae Claar
  */
 public class Main {
     /**
@@ -382,6 +383,18 @@ public class Main {
         return new BigInteger(RANDOM.generateSeed(rbytes << 1)).mod(Edwards.r);
     }
 
+    /**
+     * Test whether the provided service name is valid.
+     * 
+     * @param service the service to test
+     * @return whether the service is truly a service
+     */
+    private static boolean isValidService(String service) {
+        return (service.equals("genkey") || service.equals("ecencrypt") ||
+                service.equals("ecdecrypt") || service.equals("sign") ||
+                service.equals("verify") || service.equals("signencrypt"));
+    }
+
     public static void main(String[] args) throws IOException {
         String service = args[0];
 
@@ -542,20 +555,5 @@ public class Main {
         } catch (NumberFormatException e) {
             System.out.println("Invalid number format: " + e.getMessage());
         }
-    }
-
-    private static boolean isValidService(String service) {
-        return (service.equals("genkey") || service.equals("ecencrypt") ||
-                service.equals("ecdecrypt") || service.equals("sign") ||
-                service.equals("verify") || service.equals("signencrypt"));
-    }
-
-    // Debugging method to convert bytes to hex
-    private static String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
     }
 }
