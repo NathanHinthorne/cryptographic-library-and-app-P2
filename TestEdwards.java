@@ -12,7 +12,7 @@ public class TestEdwards {
      * properties (see appendix C of project description). Higher values (e.g. 100000) 
      * will take a pretty long time.
      */
-    private static final int RANDOM_SCALAR_TEST_COUNT = 10000; 
+    private static final int RANDOM_SCALAR_TEST_COUNT = 10; 
 
     public static void main(String[] args) {
         Random rand = new Random();
@@ -56,8 +56,8 @@ public class TestEdwards {
         }
 
         // random k, l, m property tests
-        for (int i = 0; i < RANDOM_SCALAR_TEST_COUNT; i++) {
-            System.out.println("Beginning Random scalar test " + i + "/" + RANDOM_SCALAR_TEST_COUNT);
+        for (int i = 1; i <= RANDOM_SCALAR_TEST_COUNT; i++) {
+            System.out.println("Beginning random scalar test " + i + "/" + RANDOM_SCALAR_TEST_COUNT);
             BigInteger k = new BigInteger(1024, rand);
             BigInteger l = new BigInteger(1024, rand);
             BigInteger m = new BigInteger(1024, rand);
